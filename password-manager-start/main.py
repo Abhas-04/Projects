@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
@@ -32,20 +33,56 @@ def save():
     website = website_text.get()
     email = email_text.get()
     password = password_text.get()
+    new_data = {
+        website: {
+            'email': email,
+            'password': password
+        }
+
+    }
 
     if len(website) == 0 or len(password) == 0:
         messagebox.showinfo(title='Caution!!', message="None of the field can be left blank")
     else:
+        try:
+            with open('data.json', 'r') as data_file:
+                data = json.load(data_file)
+        except FileNotFoundError:
 
-        is_ok = messagebox.askokcancel(title=website, message=f"These are the details entered: \nEmail: {email}"
-                                                              f"\nPassword: {password} \nIs it ok to save?")
+            with open('data.json', 'w') as data_file:
+                json.dump(new_data, data_file, indent=4)
+        else:
+            data.update(new_data)
+            with open('data.json', 'w') as data_file:
+                json.dump(data, data_file, indent=4)
+        finally:
 
-        if is_ok:
-            with open('data.text', "a") as data:
-                data.write(f"{website} | {email} | {password}\n")
-                messagebox.showinfo(title='Confirmation', message='Saved Successfully 😀 ')
-                website_text.delete(0, END)
-                password_text.delete(0, END)
+            messagebox.showinfo(title='Confirmation', message='Saved Successfully 😀 ')
+            website_text.delete(0, END)
+            password_text.delete(0, END)
+
+
+def search():
+    website = website_text.get()
+    try:
+     with open('data.json', 'r') as data_file:
+        data = json.load(data_file)
+
+    except FileNotFoundError:
+        messagebox.showinfo(title='Error',message='File not Found')
+    else:
+        if website in data:
+            email = data [website]['email']
+            password = data[website]['password']
+            messagebox.showinfo(title=website,message=f"Email:{email}\nPassword:{password}")
+        elif len(website) ==0:
+            messagebox.showinfo(title="Error", message="Field can't be empty")
+
+        else:
+            messagebox.showinfo(title="Error",message=f"No Detail for {website} found")
+
+
+
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -66,9 +103,9 @@ email_lbl.grid(row=2, column=0)
 password_lbl = Label(text="Password:")
 password_lbl.grid(row=3, column=0)
 
-website_text = Entry(width=35)
+website_text = Entry(width=39)
 website_text.focus()
-website_text.grid(row=1, column=1, columnspan=2, sticky=EW)
+website_text.grid(row=1, column=1)
 
 email_text = Entry(width=35)
 email_text.grid(row=2, column=1, columnspan=2, sticky=EW)
@@ -78,6 +115,9 @@ password_text.grid(row=3, column=1)
 
 generate_pwd = Button(text="Generate Password", command=gen_pwd)
 generate_pwd.grid(column=2, row=3, sticky=EW)
+
+search_button = Button(text="Search", command=search)
+search_button.grid(column=2, row=1, sticky=EW)
 
 add = Button(text='Add', width=50, command=save)
 add.grid(row=4, column=1, columnspan=2)
